@@ -34,6 +34,8 @@ def main(args):
     function_set = absExecutor.environment.function_table.keys()
     unused_functions = [item for item in function_set if item not in called_functions]
 
+    font = ttLib.TTFont(fontfile)
+
     bytecodeContainer.removeFunctions(unused_functions)
     bytecodeContainer.updateTTFont(font)
 

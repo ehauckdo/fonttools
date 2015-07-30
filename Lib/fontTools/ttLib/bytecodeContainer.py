@@ -142,7 +142,7 @@ class BytecodeContainer(object):
     def updateTTFont(self, ttFont):
         self.replaceCVTTable(ttFont)
         self.replaceFpgm(ttFont)
-        self.replaceOtherTables(ttFont)
+        #self.replaceOtherTables(ttFont)
  
     def replaceCVTTable(self, ttFont):
         try:
