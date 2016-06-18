@@ -450,6 +450,21 @@ class SRP2MethodCall(MethodCallStatement):
         super(SRP2MethodCall, self).__init__(parameters, returnVal)
         self.methodName = 'SRP2'
 
+class SZP0MethodCall(MethodCallStatement):
+    def __init__(self, parameters = [], returnVal=None):
+        super(SZP0MethodCall, self).__init__(parameters, returnVal)
+        self.methodName = 'SZP0'
+
+class SZP1MethodCall(MethodCallStatement):
+    def __init__(self, parameters = [], returnVal=None):
+        super(SZP1MethodCall, self).__init__(parameters, returnVal)
+        self.methodName = 'SZP1'
+
+class SZP2MethodCall(MethodCallStatement):
+    def __init__(self, parameters = [], returnVal=None):
+        super(SZP2MethodCall, self).__init__(parameters, returnVal)
+        self.methodName = 'SZP2'
+
 class AssignmentStatement(dataType.AbstractValue):
     def __init__(self):
         self.operator = AssignOperator()

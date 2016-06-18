@@ -832,20 +832,26 @@ class Environment(object):
                                                                       IR.Variable(tmp_name)))
 
     def exec_SZP0(self):
-        self.program_stack_pop()
-        raise NotImplementedError
+        arg = self.program_stack_pop()
+        assert (arg is 1 or arg is 0)
+        self.current_instruction_intermediate.append(IR.CopyStatement(IR.ZP0(), IR.Constant(arg)))
 
     def exec_SZP1(self):
-        self.program_stack_pop()
-        raise NotImplementedError
+        arg = self.program_stack_pop()
+        assert (arg is 1 or arg is 0)
+        self.current_instruction_intermediate.append(IR.CopyStatement(IR.ZP1(), IR.Constant(arg)))
 
     def exec_SZP2(self):
-        self.program_stack_pop()
-        raise NotImplementedError
+        arg = self.program_stack_pop()
+        assert (arg is 1 or arg is 0)
+        self.current_instruction_intermediate.append(IR.CopyStatement(IR.ZP2(), IR.Constant(arg)))
 
     def exec_SZPS(self):
-        self.program_stack_pop()
-        raise NotImplementedError
+        arg = self.program_stack_pop()
+        assert (arg is 1 or arg is 0)
+        self.current_instruction_intermediate.append(IR.CopyStatement(IR.ZP0(), IR.Constant(arg)))
+        self.current_instruction_intermediate.append(IR.CopyStatement(IR.ZP1(), IR.Constant(arg)))
+        self.current_instruction_intermediate.append(IR.CopyStatement(IR.ZP2(), IR.Constant(arg)))
 
     def exec_UTP(self):
         self.program_stack_pop()
