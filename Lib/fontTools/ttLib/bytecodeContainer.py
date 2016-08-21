@@ -203,7 +203,8 @@ class BytecodeContainer(object):
                 try:
                     ttFont[table].program.fromAssembly(assembly)
                 except:
-                    ttFont['glyf'].glyphs[table[5:]].program.fromAssembly(assembly)
+                    table = table.replace("glyf.", "")
+                    ttFont['glyf'].glyphs[table].program.fromAssembly(assembly)
 
     def print_IR(self, IR):
         for line in IR:
@@ -242,7 +243,7 @@ class Body(object):
             self.instructions = kwargs.get('instructions')
             if len(self.instructions) > 0:
                 self.statement_root = self.constructSuccessorAndPredecessor()
-
+    
     # CFG construction
     def constructSuccessorAndPredecessor(self):
         def is_branch(instruction):

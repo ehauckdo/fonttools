@@ -11,8 +11,11 @@ import getopt
 import os
 from fontTools.ttLib import TTFont
 from fontTools.misc.captureOutput import captureOutput
+from fontTools.ttLib.bytecodeContainer import BytecodeContainer, Program
+from fontTools.ttLib.instructions import statements, instructionConstructor, abstractExecute
 from fontTools import analysis
 from fontTools import roundtrip
+from fontTools import compare
 
 def usage():
     print(__doc__)
@@ -47,7 +50,7 @@ def getRoundtrip(threeaddr):
         try:
             roundtrip.main(args)
             result = out.getOutput()
-        except:            
+        except:
             result = out.getOutput()
     text_file = open(filename, "w")
     text_file.write(result)
@@ -101,17 +104,77 @@ def runTests(jobs):
         os.remove(output)
         return bytecode, roundtrip
 
-    for job in jobs:
-
-        bytecode, roundtrip = set_up(job)
+    def stack_code_compare(bytecode, roundtrip):
         error = []
-
         for table in bytecode:
             try:
                 for b, r in zip(bytecode[table], roundtrip[table]):
                     assert(b == r)
             except:
                 error.append(table)
+        return error
+
+    def freetype_compare(ttxfile, bytecode, roundtrip):
+        error = []
+        
+        # create font file from bytecode
+        font_original = TTFont()
+        font_original.importXML(ttxfile, quiet=True)
+        bytecodeContainer = BytecodeContainer(font_original)
+        for key in roundtrip.keys():
+            program_tag = "glyf.{0}".format(key)
+            instruction = constructInstructions(program_tag, roundtrip[key])
+            bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
+        bytecodeContainer.updateTTFont(font_original)
+        font_original.save("font_original")
+        font_original.close()
+
+        # create font file from roundtrip
+        font_roundtrip = TTFont()
+        font_roundtrip.importXML(ttxfile, quiet=True)
+        bytecodeContainer = BytecodeContainer(font_roundtrip)
+        for key in roundtrip.keys():
+            program_tag = "glyf.{0}".format(key)
+            instruction = constructInstructions(program_tag, roundtrip[key])
+            bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
+        bytecodeContainer.updateTTFont(font_roundtrip)
+        font_roundtrip.save("font_roundtrip")
+        font_roundtrip.close()
+ 
+        args = makeArgs("font_original", "font_roundtrip", "Notes")
+        compare.main(args)
+
+        return error
+
+    def constructInstructions(program_tag, instructions):
+            thisinstruction = None
+            instructions_list = []
+            def combineInstructionData(instruction,data):
+                instruction.add_data(data)
+            number = 0
+            for instruction in instructions:
+                instructionCons = instructionConstructor.instructionConstructor(instruction)
+                instruction = instructionCons.getClass()
+
+                if isinstance(instruction, instructionConstructor.Data):
+                    combineInstructionData(thisinstruction,instruction)
+                else:
+                    if thisinstruction is not None:
+                        thisinstruction.id = program_tag + '.' + str(number)
+                        instructions_list.append(thisinstruction)
+                        number = number+1
+                    thisinstruction = instruction
+
+            instructions_list.append(thisinstruction)
+            return instructions_list
+
+
+    for job in jobs:
+
+        bytecode, roundtrip = set_up(job)
+        
+        error = freetype_compare(job, bytecode, roundtrip)
+        #error = stack_code_compare(bytecode, roundtrip)
 
         print("Errors found for font {0}: {1}".format(job, str(len(error))))
 
