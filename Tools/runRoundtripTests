@@ -95,7 +95,7 @@ def getBytecode(ttx):
             pass
     return bytecode
 
-def runTests(jobs):
+def runTests(jobs, use_freetype=True):
 
     def set_up(job):
         output = get3ac(job)
@@ -112,11 +112,9 @@ def runTests(jobs):
                     assert(b == r)
             except:
                 error.append(table)
-        return error
+        print("Errors found for font {0}: {1}".format(job, str(len(error))))
 
     def freetype_compare(ttxfile, bytecode, roundtrip):
-        error = []
-        
         # create font file from bytecode
         font_original = TTFont()
         font_original.importXML(ttxfile, quiet=True)
@@ -126,7 +124,8 @@ def runTests(jobs):
             instruction = constructInstructions(program_tag, roundtrip[key])
             bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
         bytecodeContainer.updateTTFont(font_original)
-        font_original.save("font_original")
+        font_filename = "{0}_tmp".format(job)
+        font_original.save(font_filename)
         font_original.close()
 
         # create font file from roundtrip
@@ -138,13 +137,14 @@ def runTests(jobs):
             instruction = constructInstructions(program_tag, roundtrip[key])
             bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
         bytecodeContainer.updateTTFont(font_roundtrip)
-        font_roundtrip.save("font_roundtrip")
+        roundtrip_filename = "{0}_roundtrip".format(job)
+        font_roundtrip.save(roundtrip_filename)
         font_roundtrip.close()
  
-        args = makeArgs("font_original", "font_roundtrip", "Notes")
+        args = makeArgs(font_filename, roundtrip_filename)
         compare.main(args)
-
-        return error
+        os.remove(font_filename)
+        os.remove(roundtrip_filename)
 
     def constructInstructions(program_tag, instructions):
             thisinstruction = None
@@ -170,13 +170,11 @@ def runTests(jobs):
 
 
     for job in jobs:
-
         bytecode, roundtrip = set_up(job)
-        
-        error = freetype_compare(job, bytecode, roundtrip)
-        #error = stack_code_compare(bytecode, roundtrip)
-
-        print("Errors found for font {0}: {1}".format(job, str(len(error))))
+        if use_freetype:
+            freetype_compare(job, bytecode, roundtrip)
+        else:
+            stack_code_compare(bytecode, roundtrip)
 
 def main(args):
 
