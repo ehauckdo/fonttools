@@ -1,15 +1,21 @@
 #! /usr/bin/env python
 """
-usage: roundtrip input
+usage: roundtrip input [fontfile]
 
-    Expected input is a text file containing COI code
-    for some font 
+    input: a text file containing COI code for some font
+    fontfile: original TTF font file for given COI code. If
+              passed, an updated version of the font will
+              be generated using the COI code to build tables
 """
 
 import sys
 import re
 import os
 import copy
+from fontTools.ttLib import TTFont
+from fontTools.ttLib.bytecodeContainer import BytecodeContainer, Program
+from fontTools.ttLib.instructions import instructionConstructor
+from fontTools.ttLib.instructions.instructionConstructor import constructInstructions
 
 def usage():
     print(__doc__)
@@ -217,6 +223,22 @@ class InstructionInterpreter(object):
         merge_PUSH()
         merge_SFVTCA()
 
+def save_font(bytecode, fontfile):
+    
+    font_roundtrip = TTFont(fontfile)
+    bytecodeContainer = BytecodeContainer(font_roundtrip)
+    for key in bytecode.keys():
+        # we don't want GS initialize instructions
+        if key == 'prep':
+            del bytecode[key][:17]
+        program_tag = key
+        instruction = constructInstructions(program_tag, bytecode[key])
+        bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
+    bytecodeContainer.updateTTFont(font_roundtrip)
+    roundtrip_filename = "roundtrip_{0}".format(fontfile)
+    font_roundtrip.save(roundtrip_filename)
+    font_roundtrip.close()
+
 def process_tables(tables):
     bytecode = {} 
     interpreter = InstructionInterpreter()
@@ -234,9 +256,11 @@ def main(args):
 
     tags = {} 
     current_tag = ""
-
-    if len(args) < 0 or os.path.isfile(args[0]) == False:
+    font_file = None
+    if len(args) <= 0 or os.path.isfile(args[0]) == False:
         usage()
+    if len(args) > 1:
+        font_file = args[1]
 
     with open(args[0], "r") as file:
         
@@ -257,6 +281,8 @@ def main(args):
                 tags[current_tag].append(line[:-1])
 
         bytecode = process_tables(tags)
+        if font_file:
+            save_font(bytecode, font_file)
         return bytecode
 
 if __name__ == '__main__':

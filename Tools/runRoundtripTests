@@ -4,6 +4,7 @@ usage: runRoundtripTests [options] inputFile
 
     options:
     -f NAME folder: get all ttx from folder NAME as input files
+
 """
 
 import sys
@@ -13,6 +14,7 @@ from fontTools.ttLib import TTFont
 from fontTools.misc.captureOutput import captureOutput
 from fontTools.ttLib.bytecodeContainer import BytecodeContainer, Program
 from fontTools.ttLib.instructions import statements, instructionConstructor, abstractExecute
+from fontTools.ttLib.instructions.instructionConstructor import constructInstructions
 from fontTools import analysis
 from fontTools import roundtrip
 from fontTools import compare
@@ -27,7 +29,7 @@ def makeArgs(*params):
         args.append(param)
     return args
 
-def get3ac(ttx):
+def runAnalysis(ttx):
     filename = "%s.tmp" % ttx
     args = makeArgs("-pfziG", ttx)
     with captureOutput() as out:
@@ -41,16 +43,18 @@ def get3ac(ttx):
     text_file.close()
     return filename
 
-def getRoundtrip(threeaddr):
+def runRoundtrip(coi_code):
     
     filename = "roundtrip.tmp"
-    args = makeArgs(threeaddr)
+    args = makeArgs(coi_code)
     result = ""
+    a = 1
     with captureOutput() as out:
         try:
             roundtrip.main(args)
             result = out.getOutput()
         except:
+            a = 2
             result = out.getOutput()
     text_file = open(filename, "w")
     text_file.write(result)
@@ -58,6 +62,7 @@ def getRoundtrip(threeaddr):
     
     tags = readTempFile(filename)
     os.remove(filename)
+    os.remove(coi_code)
     return tags
 
 def readTempFile(input):
@@ -76,7 +81,6 @@ def readTempFile(input):
                 tags[current_tag] = []
             elif current_tag != "":
                 tags[current_tag].append(line[:-1])
-
     return tags
 
 def getBytecode(ttx):
@@ -98,10 +102,9 @@ def getBytecode(ttx):
 def runTests(jobs, use_freetype=True):
 
     def set_up(job):
-        output = get3ac(job)
-        roundtrip = getRoundtrip(output)
+        coi_code = runAnalysis(job)
+        roundtrip = runRoundtrip(coi_code)
         bytecode = getBytecode(job)
-        os.remove(output)
         return bytecode, roundtrip
 
     def stack_code_compare(bytecode, roundtrip):
@@ -119,9 +122,9 @@ def runTests(jobs, use_freetype=True):
         font_original = TTFont()
         font_original.importXML(ttxfile, quiet=True)
         bytecodeContainer = BytecodeContainer(font_original)
-        for key in roundtrip.keys():
+        for key in bytecode.keys():
             program_tag = "glyf.{0}".format(key)
-            instruction = constructInstructions(program_tag, roundtrip[key])
+            instruction = constructInstructions(program_tag, bytecode[key])
             bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
         bytecodeContainer.updateTTFont(font_original)
         font_filename = "{0}_tmp".format(job)
@@ -140,34 +143,11 @@ def runTests(jobs, use_freetype=True):
         roundtrip_filename = "{0}_roundtrip".format(job)
         font_roundtrip.save(roundtrip_filename)
         font_roundtrip.close()
- 
+
         args = makeArgs(font_filename, roundtrip_filename)
         compare.main(args)
         os.remove(font_filename)
         os.remove(roundtrip_filename)
-
-    def constructInstructions(program_tag, instructions):
-            thisinstruction = None
-            instructions_list = []
-            def combineInstructionData(instruction,data):
-                instruction.add_data(data)
-            number = 0
-            for instruction in instructions:
-                instructionCons = instructionConstructor.instructionConstructor(instruction)
-                instruction = instructionCons.getClass()
-
-                if isinstance(instruction, instructionConstructor.Data):
-                    combineInstructionData(thisinstruction,instruction)
-                else:
-                    if thisinstruction is not None:
-                        thisinstruction.id = program_tag + '.' + str(number)
-                        instructions_list.append(thisinstruction)
-                        number = number+1
-                    thisinstruction = instruction
-
-            instructions_list.append(thisinstruction)
-            return instructions_list
-
 
     for job in jobs:
         bytecode, roundtrip = set_up(job)
