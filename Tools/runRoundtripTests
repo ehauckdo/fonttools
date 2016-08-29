@@ -72,15 +72,20 @@ def readTempFile(input):
     with open(input, "r") as file:
         for nl, line in enumerate(file):
             if line.isspace():
+                # remove GS initialization instructions from prep 
+                if current_tag == "prep":
+                    del tags['prep'][:17]
                 current_tag = ""
-            elif line.startswith('PREP:'):
+            elif line.startswith('prep:'):
                 current_tag = 'prep'
                 tags['prep'] = []
             elif line.startswith('glyf'):
-                current_tag = line[5:-2]
+                current_tag = line[:-2]
                 tags[current_tag] = []
             elif current_tag != "":
                 tags[current_tag].append(line[:-1])
+                
+   
     return tags
 
 def getBytecode(ttx):
@@ -91,12 +96,18 @@ def getBytecode(ttx):
     for glyf in glyfs:
         try:
             assembly = tt['glyf'].glyphs[glyf].program.getAssembly()
-            key = "{0}".format(glyf)
+            key = "glyf.{0}".format(glyf)
             bytecode[key] = []
             for instr in assembly:
                 bytecode[key].append(instr)
         except:
             pass
+    try:
+        bytecode['prep'] = tt['prep'].program.getAssembly()
+    except:
+        # font has no prep
+        pass
+
     return bytecode
 
 def runTests(jobs, use_freetype=True):
@@ -123,7 +134,7 @@ def runTests(jobs, use_freetype=True):
         font_original.importXML(ttxfile, quiet=True)
         bytecodeContainer = BytecodeContainer(font_original)
         for key in bytecode.keys():
-            program_tag = "glyf.{0}".format(key)
+            program_tag = key
             instruction = constructInstructions(program_tag, bytecode[key])
             bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
         bytecodeContainer.updateTTFont(font_original)
@@ -136,7 +147,7 @@ def runTests(jobs, use_freetype=True):
         font_roundtrip.importXML(ttxfile, quiet=True)
         bytecodeContainer = BytecodeContainer(font_roundtrip)
         for key in roundtrip.keys():
-            program_tag = "glyf.{0}".format(key)
+            program_tag = key
             instruction = constructInstructions(program_tag, roundtrip[key])
             bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
         bytecodeContainer.updateTTFont(font_roundtrip)
