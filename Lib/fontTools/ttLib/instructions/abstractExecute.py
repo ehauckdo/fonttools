@@ -319,7 +319,7 @@ class Environment(object):
         new_top = self.program_stack[-index].eval(self.keep_abstract)
         self.program_stack_push(new_top, False)
         
-        var_name = identifierGenerator.generateIdentifier(self.tag, self.stack_depth() + 1)
+        var_name = identifierGenerator.generateIdentifier(self.tag, self.stack_depth())
         argN_name = identifierGenerator.generateIdentifier(self.tag, self.stack_depth() - (index - 1))
         self.current_instruction_intermediate.append(IR.CopyStatement(IR.Variable(var_name),
                                                                       IR.Variable(argN_name)))
