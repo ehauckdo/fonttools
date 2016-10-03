@@ -29,6 +29,15 @@ def makeArgs(*params):
         args.append(param)
     return args
 
+def load_font(font):
+    fileformat = font.split('.')[-1]
+    if fileformat == 'ttf':
+        tt = TTFont(font)
+    else:
+        tt = TTFont()
+        tt.importXML(ttx, quiet=True)
+    return tt
+
 def runAnalysis(ttx):
     filename = "%s.tmp" % ttx
     args = makeArgs("-pfziG", ttx)
@@ -88,10 +97,9 @@ def readTempFile(input):
    
     return tags
 
-def getBytecode(ttx):
+def getBytecode(font):
     bytecode = {}
-    tt = TTFont()
-    tt.importXML(ttx, quiet=True)
+    tt = load_font(font)
     glyfs = tt.get('glyf').keys()
     for glyf in glyfs:
         try:
@@ -130,8 +138,7 @@ def runTests(jobs, use_freetype=True):
 
     def freetype_compare(ttxfile, bytecode, roundtrip):
         # create font file from bytecode
-        font_original = TTFont()
-        font_original.importXML(ttxfile, quiet=True)
+        font_original = load_font(ttxfile)
         bytecodeContainer = BytecodeContainer(font_original)
         for key in bytecode.keys():
             program_tag = key
@@ -143,8 +150,7 @@ def runTests(jobs, use_freetype=True):
         font_original.close()
 
         # create font file from roundtrip
-        font_roundtrip = TTFont()
-        font_roundtrip.importXML(ttxfile, quiet=True)
+        font_roundtrip = load_font(ttxfile)
         bytecodeContainer = BytecodeContainer(font_roundtrip)
         for key in roundtrip.keys():
             program_tag = key
@@ -187,7 +193,7 @@ def main(args):
 
     for input in files:
         fileformat = input.split('.')[-1]
-        if fileformat == 'ttx':
+        if fileformat == 'ttx' or fileformat == 'ttf':
             jobs.append(input)
         else:
             continue
