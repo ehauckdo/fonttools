@@ -200,12 +200,12 @@ class BytecodeContainer(object):
                             stack.extend(reverse_successor)
                         else:
                             stack.extend(top_instr.successors)
-
-                try:
-                    ttFont[table].program.fromAssembly(assembly)
-                except:
-                    table = table.replace("glyf.", "")
-                    ttFont['glyf'].glyphs[table].program.fromAssembly(assembly)
+                if len(assembly) > 0:
+                    try:
+                        ttFont[table].program.fromAssembly(assembly)
+                    except:
+                        table = table.replace("glyf.", "")
+                        ttFont['glyf'].glyphs[table].program.fromAssembly(assembly)
 
     def print_IR(self, IR):
         for line in IR:
