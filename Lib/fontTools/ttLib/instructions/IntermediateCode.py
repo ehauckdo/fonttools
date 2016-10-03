@@ -410,10 +410,25 @@ class SCFSMethodCall(MethodCallStatement):
         super(SCFSMethodCall, self).__init__(parameters, returnVal)
         self.methodName = 'SCFS'
 
+class SDPVTLMethodCall(MethodCallStatement):
+    def __init__(self, data, parameters = [], returnVal=None):
+        super(SDPVTLMethodCall, self).__init__(parameters, returnVal)
+        self.methodName = 'SDPVTL_'+data
+
 class SDSMethodCall(MethodCallStatement):
     def __init__(self, parameters = [], returnVal=None):
         super(SDSMethodCall, self).__init__(parameters, returnVal)
         self.methodName = 'SDS'
+
+class SFVFSMethodCall(MethodCallStatement):
+    def __init__(self, parameters = [], returnVal=None):
+        super(SFVFSMethodCall, self).__init__(parameters, returnVal)
+        self.methodName = 'SFVFS'
+
+class SFVTLMethodCall(MethodCallStatement):
+    def __init__(self, data, parameters = [], returnVal=None):
+        super(SFVTLMethodCall, self).__init__(parameters, returnVal)
+        self.methodName = 'SFVTL_'+data
 
 class SHCMethodCall(MethodCallStatement):
     def __init__(self, data, parameters = [], returnVal=None):

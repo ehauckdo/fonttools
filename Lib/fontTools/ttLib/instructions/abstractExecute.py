@@ -703,16 +703,16 @@ class Environment(object):
         self.current_instruction_intermediate.append(IR.SDBMethodCall([arg]))
 
     def exec_SDPVTL(self):
-        self.program_stack_pop_many(2)
-        raise NotImplementedError
+        args = self.program_stack_pop_many(2)
+        self.current_instruction_intermediate.append(IR.SDPVTLMethodCall(self.current_instruction.data[0], args))
 
     def exec_SDS(self):
         arg = self.program_stack_pop()
         self.current_instruction_intermediate.append(IR.SDSMethodCall([arg]))
 
     def exec_SFVFS(self):
-        self.program_stack_pop_many(2)
-        raise NotImplementedError
+        args = self.program_stack_pop_many(2)
+        self.current_instruction_intermediate.append(IR.SFVFSMethodCall([arg]))
 
     def exec_SFVTCA(self):
         data = int(self.current_instruction.data[0])
@@ -724,8 +724,8 @@ class Environment(object):
         self.current_instruction_intermediate.append(IR.CopyStatement(IR.FreedomVector(),IR.Constant(data)))
            
     def exec_SFVTL(self):#Set Freedom Vector To Line
-        self.program_stack_pop_many(2)
-        raise NotImplementedError
+        args = self.program_stack_pop_many(2)
+        self.current_instruction_intermediate.append(IR.SDPVTLMethodCall(self.current_instruction.data[0], args))
 
     def exec_SFVTPV(self):#Set Freedom Vector To Projection Vector
         self.graphics_state['fv'] = self.graphics_state['pv']
