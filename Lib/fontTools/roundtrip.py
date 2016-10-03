@@ -294,7 +294,7 @@ def save_font(bytecode, fontfile):
         instruction = constructInstructions(program_tag, bytecode[key])
         bytecodeContainer.tag_to_programs[program_tag] = Program(instruction)
     bytecodeContainer.updateTTFont(font_roundtrip)
-    roundtrip_filename = "roundtrip_{0}".format(fontfile)
+    roundtrip_filename = "{0}_roundtrip.ttf".format(fontfile.split(".ttf")[0])
     font_roundtrip.save(roundtrip_filename)
     font_roundtrip.close()
 
