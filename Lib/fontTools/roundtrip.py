@@ -55,6 +55,10 @@ class AssignInstruction(object):
         else:
             return False
 
+    def is_assigning_var(self):
+        pattern = re.compile('\$..*')
+        return pattern.match(self.addr2)
+
     def is_function(self):
         pattern = re.compile('..*\(..*\)')
         return pattern.match(self.addr2)
@@ -164,7 +168,10 @@ class InstructionInterpreter(object):
                     if instruction.is_function():
                         instr = self.parse_function(instruction.addr2)
                     else:
-                        instr = "PUSH["+instruction.addr2+"]"
+                        if instruction.is_assigning_var():
+                            instr = instruction.__str__()
+                        else:
+                            instr = "PUSH["+instruction.addr2+"]"
                         if instruction_line != self.parse_assignment(instruction_line):
                             instr = self.parse_assignment(instruction_line)
 
@@ -190,6 +197,25 @@ class InstructionInterpreter(object):
                     instructions.append(Instruction(mnemonic, data, index))
             return instructions
 
+        def find_assignments():
+            pattern = re.compile('\$..*\$..*')
+            instructions = []
+            sequence = []
+            first_index = -1
+            for index, instr in enumerate(self.bytecodeInstructions):
+                if pattern.match(instr):
+                    addrs = instr.split(" := ")
+                    addr1 = addrs[0].split("_")[-1]
+                    addr2 = addrs[1].split("_")[-1]
+                    sequence.append(int(addr2)-int(addr1))
+                    if first_index < 0:
+                        first_index = index
+                elif sequence:
+                    instructions.append((list(sequence), first_index))
+                    del sequence[:]
+                    first_index = -1
+            return instructions
+
         def merge_PUSH():
             instructions = find_instructions("PUSH")
             data = []
@@ -213,6 +239,38 @@ class InstructionInterpreter(object):
                         update_stack("SVTCA[{0}]".format(fv.data), fv.line, [])
                         break
 
+        def merge_OTHER():
+            instructions_groups = find_assignments()
+            for instr_list, index in reversed(instructions_groups):
+                length = len(instr_list)
+                # DUP check
+                if instr_list[0] == [-1]:
+                    update_stack("DUP[ ]", index, [])
+                # CINDEX check
+                elif instr_list[0] < -1 and length == 1:
+                    update_stack("CINDEX[ ]", index, [])
+                # SWAP check
+                elif instr_list == [-1, -1, 2]:
+                        update_stack("SWAP[ ]", index, [])
+                # ROLL check
+                elif instr_list == [-1, -2, 1, 2]:
+                        update_stack("ROLL[ ]", index, [])
+                # MINDEX check
+                else:
+                    # conditions for MINDEX:
+                    # [1, -X, {X times 1 value}, 2]
+                    # where X = len - 2
+                    if (
+                        instr_list[0] == 1 and instr_list[-1] == 2 and
+                        instr_list[1] == (length-2)*(-1) and 
+                        instr_list[2:-1] == [1] * (length-3)
+                        ):
+                        update_stack("MINDEX[ ]", index, [])
+                    else:
+                        # if none of above, either a malformed or unkown instruction
+                        raise UnkownInstructionError
+                del self.bytecodeInstructions[index+1:index+1+length]
+
         def update_stack(mnemonic, index, data):
             for d in data:
                 self.bytecodeInstructions.insert(index, d)
@@ -222,6 +280,7 @@ class InstructionInterpreter(object):
 
         merge_PUSH()
         merge_SFVTCA()
+        merge_OTHER()
 
 def save_font(bytecode, fontfile):
     
