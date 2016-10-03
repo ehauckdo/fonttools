@@ -218,6 +218,8 @@ class InstructionInterpreter(object):
 
         def merge_PUSH():
             instructions = find_instructions("PUSH")
+            if len(instructions) == 0:
+                return
             data = []
             last_line = instructions[-1].line
             for instr in reversed(instructions):
