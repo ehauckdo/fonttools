@@ -35,7 +35,7 @@ def load_font(font):
         tt = TTFont(font)
     else:
         tt = TTFont()
-        tt.importXML(ttx, quiet=True)
+        tt.importXML(font, quiet=True)
     return tt
 
 def runAnalysis(ttx):
@@ -100,16 +100,20 @@ def readTempFile(input):
 def getBytecode(font):
     bytecode = {}
     tt = load_font(font)
-    glyfs = tt.get('glyf').keys()
-    for glyf in glyfs:
-        try:
-            assembly = tt['glyf'].glyphs[glyf].program.getAssembly()
-            key = "glyf.{0}".format(glyf)
-            bytecode[key] = []
-            for instr in assembly:
-                bytecode[key].append(instr)
-        except:
-            pass
+    try:
+        glyfs = tt.get('glyf').keys()
+        for glyf in glyfs:
+            try:
+                assembly = tt['glyf'].glyphs[glyf].program.getAssembly()
+                key = "glyf.{0}".format(glyf)
+                bytecode[key] = []
+                for instr in assembly:
+                    bytecode[key].append(instr)
+            except:
+                pass
+    except:
+        # font has no glyphs
+        pass
     try:
         bytecode['prep'] = tt['prep'].program.getAssembly()
     except:

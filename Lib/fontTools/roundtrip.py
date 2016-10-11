@@ -91,6 +91,7 @@ class InstructionInterpreter(object):
         ("RoundState_HG",        "RTHG[ ]"),
         ("RoundState_UG",        "RUTG[ ]"),
         ("RoundState_DG",        "RTDG[ ]"),
+        ("RoundState_DTG",       "RDTG[ ]"),
         ("Super45(",             "S45ROUND[ ]"),
         ("Super(",               "SROUND[ ]"),
         ("PPEM",                 "MPPEM[ ]"),
