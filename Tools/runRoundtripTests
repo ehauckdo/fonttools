@@ -165,15 +165,22 @@ def runTests(jobs, use_freetype=True):
         font_roundtrip.save(roundtrip_filename)
         font_roundtrip.close()
 
-        args = makeArgs(font_filename, roundtrip_filename)
-        compare.main(args)
+        args = makeArgs("-i", font_filename, roundtrip_filename)
+        passed = True
+        with captureOutput() as out:
+            try:
+                compare.main(args)
+            except:
+                passed = False
         os.remove(font_filename)
         os.remove(roundtrip_filename)
+        return passed
 
     for job in jobs:
         bytecode, roundtrip = set_up(job)
         if use_freetype:
-            freetype_compare(job, bytecode, roundtrip)
+            passed = freetype_compare(job, bytecode, roundtrip)
+            print("{0}: {1}".format(job, "OK" if passed is True else "Failed"))
         else:
             stack_code_compare(bytecode, roundtrip)
 

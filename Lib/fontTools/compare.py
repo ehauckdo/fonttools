@@ -6,6 +6,7 @@ usage: pyftcompare [options] fontA fontB inputFileOrURL
     General options:
     -h Help: print this message
     -v Verbose: be more verbose
+    -i Interrupt: interrupt execution if differing glyph found
     -e CODE Encoding: encoding used to read the input file
     -x HRES Hres: Horizontal resolution dpi
     -y VRES Vres: Vertical resolution dpi
@@ -34,6 +35,7 @@ def usage():
 class Options(object):
     encoding = 'utf-8'
     verbose = False
+    interrupt = False 
     resolutionList = [(72,72), (300, 300), (600, 600),
                       (1200, 1200), (2400, 2400)]
  
@@ -49,6 +51,8 @@ class Options(object):
                 self.encoding = value
             elif option == "-v":
                 self.verbose = True
+            elif option == "-i":
+                self.interrupt = True 
             elif option == "-x":
                 hres = int(value)
             elif option == "-y":
@@ -69,7 +73,7 @@ class Options(object):
 
 def parseOptions(args):
     try:
-        rawOptions, files = getopt.getopt(args, "hve:x:y:")
+        rawOptions, files = getopt.getopt(args, "hvie:x:y:")
     except getopt.GetoptError:
         usage()
 
@@ -86,7 +90,7 @@ def parseOptions(args):
 def main(args):
     try:
         options, fontA, fontB, charList = parseOptions(args)
-        compareFonts(fontA, fontB, charList, options.resolutionList)
+        compareFonts(fontA, fontB, charList, options.resolutionList, options.interrupt)
     
     except ValueError as err:
         print("ERROR: "+str(err))

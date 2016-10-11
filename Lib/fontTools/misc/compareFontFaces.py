@@ -3,7 +3,7 @@ from freetype import *
 
 logger = logging.getLogger(" ")
 
-def compareFonts(fontA, fontB, charList, resolutionList):
+def compareFonts(fontA, fontB, charList, resolutionList, interrupt=False):
     '''
     Test if a set of glyphs present in the input file are
     identifical for the two given TrueType fonts.
@@ -16,6 +16,8 @@ def compareFonts(fontA, fontB, charList, resolutionList):
 
     :param resolutionList: list of tuples for horizontal and vertical
                      resolution in dpi.
+
+    :param interrupt: interrupt if differing or not found glyph
     '''
 
 
@@ -81,7 +83,11 @@ def compareFonts(fontA, fontB, charList, resolutionList):
                         loadAndCompareGlyph(aGlyphIndex, bGlyphIndex)
                         charcodeA, aGlyphIndex  = faceA.get_next_char(charcodeA, aGlyphIndex)
                         charcodeB, bGlyphIndex  = faceA.get_next_char(charcodeB, bGlyphIndex)
-
+                
+                if interrupt:
+                    assert len(differList)==0 
+                    assert notFoundCount==0
+                    
         except KeyboardInterrupt:
             raise KeyboardInterrupt
 
