@@ -63,6 +63,10 @@ class AssignInstruction(object):
         pattern = re.compile('..*\(..*\)')
         return pattern.match(self.addr2)
 
+    def is_unary(self):
+        return self.op != "" and self.addr3 == ""
+        
+
 class Instruction(object):
 
     def __init__(self, mnemonic, data, line):
@@ -177,8 +181,11 @@ class InstructionInterpreter(object):
                             instr = self.parse_assignment(instruction_line)
 
                 else:
-                    operator = self.get_binary_op(instruction.op)
-                    instr = operator+"[ ]"
+                    if instruction.is_unary():
+                        instr = instruction.addr2+"[ ]"
+                    else:
+                        operator = self.get_binary_op(instruction.op)
+                        instr = operator+"[ ]"
             else:
 
                 instr = self.parse_assignment(instruction_line)
