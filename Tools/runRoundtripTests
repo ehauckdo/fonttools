@@ -57,13 +57,11 @@ def runRoundtrip(coi_code):
     filename = "roundtrip.tmp"
     args = makeArgs(coi_code)
     result = ""
-    a = 1
     with captureOutput() as out:
         try:
             roundtrip.main(args)
             result = out.getOutput()
         except:
-            a = 2
             result = out.getOutput()
     text_file = open(filename, "w")
     text_file.write(result)

@@ -254,7 +254,7 @@ class InstructionInterpreter(object):
             for instr_list, index in reversed(instructions_groups):
                 length = len(instr_list)
                 # DUP check
-                if instr_list[0] == [-1]:
+                if instr_list == [-1]:
                     update_stack("DUP[ ]", index, [])
                 # CINDEX check
                 elif instr_list[0] < -1 and length == 1:
