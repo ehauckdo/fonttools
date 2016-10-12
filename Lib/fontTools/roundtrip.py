@@ -278,7 +278,7 @@ class InstructionInterpreter(object):
                         update_stack("MINDEX[ ]", index, [])
                     else:
                         # if none of above, either a malformed or unkown instruction
-                        raise UnkownInstructionError
+                        raise ValueError("Unkown or malformed instruction")
                 del self.bytecodeInstructions[index+1:index+1+length]
 
         def update_stack(mnemonic, index, data):
