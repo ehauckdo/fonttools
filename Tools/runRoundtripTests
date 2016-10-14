@@ -5,6 +5,11 @@ usage: runRoundtripTests [options] inputFile
     options:
     -f NAME folder: get all ttx from folder NAME as input files
 
+    This script will run a simple COI code generation / roundtrip back
+    to bytecode for a given font. For each font:
+    - run analysis
+    - roundtrip output code back to a font file
+    - compare glyphs rendered for new and original font files
 """
 
 import sys
@@ -54,48 +59,36 @@ def runAnalysis(ttx):
 
 def runRoundtrip(coi_code):
     
-    filename = "roundtrip.tmp"
     args = makeArgs(coi_code)
-    result = ""
+    output = ""
     with captureOutput() as out:
         try:
             roundtrip.main(args)
-            result = out.getOutput()
+            output = out.getOutput()
         except:
-            result = out.getOutput()
-    text_file = open(filename, "w")
-    text_file.write(result)
-    text_file.close()
+            output = out.getOutput()
     
-    tags = readTempFile(filename)
-    os.remove(filename)
-    os.remove(coi_code)
-    return tags
-
-def readTempFile(input):
     tags = {}
     current_tag = ""
 
-    with open(input, "r") as file:
-        for nl, line in enumerate(file):
-            if line.isspace():
-                # remove GS initialization instructions from prep 
-                if current_tag == "prep":
-                    del tags['prep'][:17]
-                current_tag = ""
-            elif line.startswith('prep:'):
-                current_tag = 'prep'
-                tags['prep'] = []
-            elif line.startswith('glyf'):
-                current_tag = line[:-2]
-                tags[current_tag] = []
-            elif current_tag != "":
-                tags[current_tag].append(line[:-1])
-                
-   
-    return tags
+    for line in output.split('\n'):
+        if line.isspace() or line is "":
+            # remove GS initialization instructions from prep 
+            if current_tag == "prep":
+                del tags['prep'][:17]
+            current_tag = ""
+        elif line.startswith('prep:'):
+            current_tag = 'prep'
+            tags['prep'] = []
+        elif line.startswith('glyf'):
+            current_tag = line[:-1]
+            tags[current_tag] = []
+        elif current_tag != "":
+            tags[current_tag].append(line)
 
-def getBytecode(font):
+    return tags 
+
+def extractBytecode(font):
     bytecode = {}
     tt = load_font(font)
     try:
@@ -125,7 +118,7 @@ def runTests(jobs, use_freetype=True):
     def set_up(job):
         coi_code = runAnalysis(job)
         roundtrip = runRoundtrip(coi_code)
-        bytecode = getBytecode(job)
+        bytecode = extractBytecode(job)
         return bytecode, roundtrip
 
     def stack_code_compare(bytecode, roundtrip):

@@ -76,6 +76,7 @@ class Instruction(object):
     def __repr__(self):
         return("{0}[{1}], line {2}".format(self.mnemonic, self.data, self.line))
 
+# InstructionInterpreter will translate 
 class InstructionInterpreter(object):
     bytecodeInstructions = [] # contains the translated TTF so far
 
@@ -249,6 +250,12 @@ class InstructionInterpreter(object):
                         update_stack("SVTCA[{0}]".format(fv.data), fv.line, [])
                         break
 
+        # Merge instructions that push or pop values from the stack.
+        # Each COI instruction is represented by the assigning variable
+        # label number minus the assigned variable label number
+        # e.g. $prep275 = $prep272   ( = -3 )
+        # each instruction generates a different sequence of intengers
+        # which we will find and merge here
         def merge_OTHER():
             instructions_groups = find_assignments()
             for instr_list, index in reversed(instructions_groups):
@@ -279,6 +286,7 @@ class InstructionInterpreter(object):
                     else:
                         # if none of above, either a malformed or unkown instruction
                         raise ValueError("Unkown or malformed instruction")
+                # remove the instructions left after merge 
                 del self.bytecodeInstructions[index+1:index+1+length]
 
         def update_stack(mnemonic, index, data):
